@@ -3,6 +3,12 @@ package com.amsu.test.wifiTramit;
 import android.os.Environment;
 import android.util.Log;
 
+import com.amsu.test.wifiTramit.uilt.WriteReadDataToBinaryFile;
+import com.amsu.test.wifiTramit.uilt.WriteReadDataToFileStrategy;
+import com.amsu.test.wifiTramit.uilt.WriteReadDataToTextFile;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -302,17 +308,90 @@ public class DeviceOffLineFileUtil {
     }
 
     //写到文件里，文本方式写入
-    public static void writeEcgDataToTextFile(List<Integer> mAllData){
+    public static void writeEcgDataToTextFile(List<Integer> mAllData,String fileName){
         FileWriter a= null;
         try {
-            String filePath = Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+ MyUtil.getECGFileNameDependFormatTime(new Date())+".ecg";
+            //String filePath = Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+ MyUtil.getECGFileNameDependFormatTime(new Date())+".ecg";
+            String filePath = Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+ fileName;
             a = new FileWriter(filePath);
             for(int i:mAllData){
                 a.write(i+" ");
             }
             Log.i(TAG,"写入文件成功");
+            List<String> readFileToSP = getUploadFileToSP();
+            for (String s:readFileToSP){
+                if (!filePath.equals(s)){
+                    readFileToSP.add(filePath);
+                }
+            }
+            putUploadFileToSP(readFileToSP);
+
         } catch (IOException e) {
             e.printStackTrace();
+
         }
     }
+
+    //写到文件里，文本方式写入
+    public static boolean writeEcgDataToTextFileNew(List<Integer> mAllData,String fileName){
+        String filePath = Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+ fileName;
+        WriteReadDataToFileStrategy writeReadDataToFileStrategy = new WriteReadDataToTextFile();
+        boolean isWriteSuccess = writeReadDataToFileStrategy.writeDataToFile(mAllData, filePath);
+        writeFileListToSP(filePath);
+        return isWriteSuccess;
+    }
+
+    //写到文件里，二进制方式写入
+    public static boolean writeEcgDataToBinaryFile(List<Integer> mAllData,String fileName){
+        String filePath = Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+ fileName;
+        WriteReadDataToFileStrategy writeReadDataToFileStrategy = new WriteReadDataToBinaryFile();
+        boolean isWriteSuccess = writeReadDataToFileStrategy.writeDataToFile(mAllData, filePath);
+        writeFileListToSP(filePath);
+        return isWriteSuccess;
+    }
+
+    private static void writeFileListToSP(String filePath) {
+        List<String> readFileToSP = getUploadFileToSP();
+        if (readFileToSP.size()==0){
+            readFileToSP.add(filePath);
+        }
+        else {
+            for (String s:readFileToSP){
+                if (!filePath.equals(s)){
+                    readFileToSP.add(filePath);
+                }
+            }
+        }
+        putUploadFileToSP(readFileToSP);
+    }
+
+    public static List<Integer> readEcgDataToTextFileNew(String fileName){
+        WriteReadDataToFileStrategy writeReadDataToFileStrategy = new WriteReadDataToTextFile();
+        return writeReadDataToFileStrategy.readDataFromFile(fileName);
+    }
+
+    public static List<Integer> readEcgDataToBinaryFile(String fileName){
+        WriteReadDataToFileStrategy writeReadDataToFileStrategy = new WriteReadDataToBinaryFile();
+        return writeReadDataToFileStrategy.readDataFromFile(fileName);
+    }
+
+    public static void putUploadFileToSP(List<String> fileNameList){
+        Gson gson = new Gson();
+        String fileNameListString = gson.toJson(fileNameList);
+        MyUtil.putStringValueFromSP("fileNameListString",fileNameListString);
+    }
+
+    public static List<String>  getUploadFileToSP(){
+        String fileNameListString = MyUtil.getStringValueFromSP("fileNameListString");
+        Gson gson = new Gson();
+
+        List<String> fileNameList = gson.fromJson(fileNameListString, new TypeToken<List<String>>() {
+        }.getType());
+        if (fileNameList!=null){
+            return fileNameList;
+        }
+        return new ArrayList<>();
+    }
+
+
 }

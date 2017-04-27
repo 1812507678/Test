@@ -6,6 +6,9 @@
     android:orientation="vertical"
     tools:context="com.amsu.test.wifiTramit.TestActivity">
 
+    <include layout="@layout/page_head"
+        android:id="@+id/rl_base_head">
+    </include>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -97,6 +100,15 @@
             android:onClick="generateFile"
             android:text="生成文件"
             android:textSize="10dp" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="lookupDraw"
+            android:text="绘图"
+            android:textSize="10dp"
+            android:textColor="#CD6600"/>
 
     </LinearLayout>
 

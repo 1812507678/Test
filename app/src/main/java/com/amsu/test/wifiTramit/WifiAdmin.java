@@ -402,4 +402,30 @@ public abstract class WifiAdmin {
     public String getWifiInfo() {
         return (mWifiInfo == null) ? "NULL" : mWifiInfo.toString();
     }
+
+    //链接指定的WiFi
+    public static void connectToWifi(final Context context){
+        WifiAdmin  mWifiAdmin = new WifiAdmin(context) {
+            @Override
+            public void myUnregisterReceiver(BroadcastReceiver receiver) {
+                context.unregisterReceiver(receiver);
+            }
+            @Override
+            public Intent myRegisterReceiver(BroadcastReceiver receiver, IntentFilter filter) {
+                context.registerReceiver(receiver, filter);
+                return null;
+            }
+            @Override
+            public void onNotifyWifiConnected() {
+                Log.v(TAG, "have connected success!");
+            }
+            @Override
+            public void onNotifyWifiConnectFailed() {
+                Log.v(TAG, "have connected failed!");
+            }
+        };
+        mWifiAdmin.openWifi();
+        // 连的WIFI热点是用WPA方式保护
+        mWifiAdmin.addNetwork(mWifiAdmin.createWifiInfo(DeviceOffLineFileUtil.HOST_SPOT_SSID, DeviceOffLineFileUtil.HOST_SPOT_PASS_WORD, WifiAdmin.TYPE_WPA));
+    }
 }

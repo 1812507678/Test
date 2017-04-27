@@ -30,10 +30,61 @@ import java.util.Locale;
  */
 
 public class MyUtil {
+    private static final String TAG = "MyUtil";
+
     public static String getECGFileNameDependFormatTime(Date date){
         //SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd H:m:s");
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINA);  //07-12 15:10
         return format.format(date);
+    }
+
+    public static String getStringValueFromSP(String key){
+        return MyApplication.sharedPreferences.getString(key,"");
+    }
+
+    public static boolean getBooleanValueFromSP(String key){
+        return MyApplication.sharedPreferences.getBoolean(key,false);
+    }
+
+    public static int getIntValueFromSP(String key){
+        return MyApplication.sharedPreferences.getInt(key,-1);
+    }
+
+
+    public static void putStringValueFromSP(String key,String value){
+        SharedPreferences.Editor edit = MyApplication.sharedPreferences.edit();
+        edit.putString(key,value).apply();
+    }
+
+    public static void showToask(Context context ,String text){
+        Toast.makeText(context,text,Toast.LENGTH_SHORT).show();
+    }
+
+
+    private static ProgressDialog dialog;
+
+    public static void showDialog(String message,Context context){
+        try {
+            if (dialog == null) {
+                dialog = new ProgressDialog(context);
+                dialog.setCancelable(true);
+            }
+            dialog.setMessage(message);
+            dialog.show();
+            Log.i(TAG,"dialog.show();");
+        } catch (Exception e) {
+            e.printStackTrace();
+            // 在其他线程调用dialog会报错
+        }
+        Log.i(TAG,"showDialog:"+dialog.isShowing());
+    }
+
+    public static void hideDialog() {
+        if (dialog != null && dialog.isShowing()){
+            dialog.dismiss();
+            Log.i(TAG,"hideDialog:"+dialog.isShowing());
+            dialog = null;
+        }
     }
 
 }

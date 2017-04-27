@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class TestActivity extends Activity {
+public class TestActivity extends BaseActivity {
 
     private static final String TAG = "TestActivity";
     private TextView servic_info;
@@ -49,7 +50,6 @@ public class TestActivity extends Activity {
     private ListView list_item;
     private List<String> stringList;
     private String serverMsg;
-    private MyAdapter myAdapter;
     private int length;
 
     int mUploadFileCountIndex;  //当前传输的索引
@@ -66,12 +66,24 @@ public class TestActivity extends Activity {
     private List<Integer> mAllData = new ArrayList<>();
     private TextView tv_filelength;
     private TextView tv_uploadprogress;
+    private String currentUploadFileName;
+    private FileListAdapter fileListAdapter;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
+
+        initView();
+
+
+    }
+
+    private void initView() {
+        initHeadView();
+        setCenterText("WiFi底座测试");
+
         servic_info = (TextView) findViewById(R.id.servic_info);
         recive_msg = (TextView) findViewById(R.id.recive_msg);
         recive_text = (TextView) findViewById(R.id.recive_text);
@@ -80,21 +92,23 @@ public class TestActivity extends Activity {
         list_item = (ListView) findViewById(R.id.list_item);
 
         stringList = new ArrayList<>();
-        myAdapter = new MyAdapter();
-        list_item.setAdapter(myAdapter);
+        fileListAdapter = new FileListAdapter(stringList,this);
+
+        list_item.setAdapter(fileListAdapter);
 
         list_item.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
                 String fileName = stringList.get(position);
-                Toast.makeText(TestActivity.this,fileName,Toast.LENGTH_LONG).show();
+                currentUploadFileName = fileName;
+                Toast.makeText(TestActivity.this,fileName+" 开始上传",Toast.LENGTH_LONG).show();
                 //String fileName = "20170413172800.ecg";
                 String startOrder = "FF040018";
                 String deviceOrder = startOrder + DeviceOffLineFileUtil.stringToHexString(fileName) + DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum("FF 04 00 18",fileName)+"16";
                 Log.i(TAG,"deviceOrder:"+deviceOrder);
                 sendReadDeviceOrder(deviceOrder);
                 isStartUploadData = false;
+                recive_msg.setText("");
             }
         });
 
@@ -105,35 +119,14 @@ public class TestActivity extends Activity {
                 judgeRequireRetransmission();
             }
         });
+
     }
 
     public void connectToWifi(View view) {
-        WifiAdmin  mWifiAdmin = new WifiAdmin(this) {
-            @Override
-            public void myUnregisterReceiver(BroadcastReceiver receiver) {
-                unregisterReceiver(receiver);
-            }
-            @Override
-            public Intent myRegisterReceiver(BroadcastReceiver receiver, IntentFilter filter) {
-                registerReceiver(receiver, filter);
-                return null;
-            }
-            @Override
-            public void onNotifyWifiConnected() {
-                Log.v(TAG, "have connected success!");
-            }
-            @Override
-            public void onNotifyWifiConnectFailed() {
-                Log.v(TAG, "have connected failed!");
-            }
-        };
-        mWifiAdmin.openWifi();
-        // 连的WIFI热点是用WPA方式保护
-        mWifiAdmin.addNetwork(mWifiAdmin.createWifiInfo(DeviceOffLineFileUtil.HOST_SPOT_SSID, DeviceOffLineFileUtil.HOST_SPOT_PASS_WORD, WifiAdmin.TYPE_WPA));
+        WifiAdmin.connectToWifi(this);
     }
 
     public void createSocket(View view) {
-        Log.i(TAG,"createSocket");
         WifiManager wifiManage = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         DhcpInfo info = wifiManage.getDhcpInfo();
         WifiInfo wifiinfo = wifiManage.getConnectionInfo();
@@ -144,7 +137,7 @@ public class TestActivity extends Activity {
         new Sender(serverAddress, message).start();
         String msg = "ip:" + ip + "serverAddress:" + serverAddress + info;
         //servic_info.setText(msg);
-        Log.w(TAG, msg);
+        Log.i(TAG, msg);
     }
 
     /** 将获取的int转为真正的ip地址,参考的网上的，修改了下 */
@@ -154,6 +147,8 @@ public class TestActivity extends Activity {
 
 
     boolean isStartUploadData;
+
+
 
     /* 客户端发送数据 */
     private class Sender extends Thread {
@@ -311,22 +306,6 @@ public class TestActivity extends Activity {
 
     }
 
-    int kk=0;
-    private void sedMsgTest() {
-        if (kk<10){
-            String offsetHexLenght = DeviceOffLineFileUtil.getFormatHexFileLenght(8, mOneUploadMaxByte*mUploadFileCountIndex);
-
-            //String offsetHexLenght = DeviceOffLineFileUtil.getFormatHexFileLenght(8, offsetTest);
-            String fileHexLenght = DeviceOffLineFileUtil.getFormatHexFileLenght(8, mOneUploadMaxByte);
-            String startOrder = "FF05000e"+offsetHexLenght+fileHexLenght;
-            String deviceOrder = startOrder+DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum(startOrder)+"16";
-            Log.i(TAG,mUploadFileCountIndex+"分段上传deviceOrder:"+deviceOrder);
-            sendReadDeviceOrder(deviceOrder);
-            kk++;
-        }
-
-    }
-
     public void getVersion(View view) {
         //"FF0100060616"
         /*if (socketWriter!=null){
@@ -449,6 +428,10 @@ public class TestActivity extends Activity {
         sendReadDeviceOrder(DeviceOffLineFileUtil.generateDeviceFile);
     }
 
+    public void lookupDraw(View view) {
+        startActivity(new Intent(this,DrawLineTestActivity.class));
+    }
+
     //版本号：
     private void dealWithDeviceVersion(final String toHexString) {
         // FF 81 00 0C 10 04 07 10 04 07 C2 16
@@ -531,7 +514,7 @@ public class TestActivity extends Activity {
                 serverMsg ="主机hex: "+df.format(new Date()) +":\n"+ allHexString;
                 recive_msg.setText(serverMsg);
 
-                myAdapter.notifyDataSetChanged();
+                fileListAdapter.notifyDataSetChanged();
             }
         });
     }
@@ -600,10 +583,31 @@ public class TestActivity extends Activity {
     }
 
     //文件上传
-    private void dealWithDeviceFileUpload(int length,String toHexString) {
+    private void dealWithDeviceFileUpload(int length, final String toHexString) {
         if (startTimeMillis==0){
             startTimeMillis = System.currentTimeMillis();
         }
+        /*if (startTimeMillis==0){
+            startTimeMillis = System.currentTimeMillis();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 设置日期格式
+                    serverMsg ="主机hex: "+df.format(new Date()) +":\n"+ toHexString;
+                    recive_msg.setText(serverMsg);
+                }
+            });
+        }
+        else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    serverMsg += "\n" +toHexString;
+                    recive_msg.setText(serverMsg);
+                }
+            });
+
+        }*/
 
         if (mUploadFileCountIndex<mAllFileCount){
             //前几次整数上传
@@ -692,7 +696,8 @@ public class TestActivity extends Activity {
             }
         });
 
-        DeviceOffLineFileUtil.writeEcgDataToTextFile(mAllData);
+        boolean isWriteSuccess = DeviceOffLineFileUtil.writeEcgDataToBinaryFile(mAllData, currentUploadFileName);
+        Log.i(TAG,"写入文件isWriteSuccess:"+isWriteSuccess);
 
     }
 
@@ -1030,35 +1035,5 @@ public class TestActivity extends Activity {
         BigInteger bigInteger = new BigInteger(hexString, 16);
         return bigInteger.toString();
     }
-
-
-    class  MyAdapter extends BaseAdapter{
-
-        @Override
-        public int getCount() {
-            return stringList.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return null;
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return 0;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            String s = stringList.get(position);
-            View inflate = View.inflate(TestActivity.this, R.layout.item, null);
-            TextView tv_text = (TextView) inflate.findViewById(R.id.tv_text);
-
-            tv_text.setText(s);
-            return inflate;
-        }
-    }
-
 
 }
