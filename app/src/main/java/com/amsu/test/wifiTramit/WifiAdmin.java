@@ -7,6 +7,7 @@
 package com.amsu.test.wifiTramit;
 
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +21,8 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.util.Log;
+
+import com.amsu.test.other.WifiApAdmin;
 
 import java.util.List;
 import java.util.Timer;
@@ -79,13 +82,15 @@ public abstract class WifiAdmin {
 
     // 添加一个网络并连接
     public void addNetwork(WifiConfiguration wcg) {
+        Log.i(TAG, "addNetwork");
+        register();
 
-        //register();
-
-        //WifiApAdmin.closeWifiAp(mContext);
+        WifiApAdmin.closeWifiAp(mContext);
 
         int wcgID = mWifiManager.addNetwork(wcg);
+        Log.i(TAG, "wcgID:"+wcgID);
         boolean b = mWifiManager.enableNetwork(wcgID, true);
+        Log.e(TAG, "b:"+b);
     }
 
     public static final int TYPE_NO_PASSWD = 0x11;
@@ -144,7 +149,7 @@ public abstract class WifiAdmin {
 
     private int mHaveRegister = STATE_UNREGISTERED;
     private synchronized void register() {
-        Log.v(TAG, "register() ##mHaveRegister = " + mHaveRegister);
+        Log.i(TAG, "register() ##mHaveRegister = " + mHaveRegister);
 
         if (mHaveRegister == STATE_REGISTRING || mHaveRegister == STATE_REGISTERED) {
             return ;
@@ -158,7 +163,7 @@ public abstract class WifiAdmin {
     }
 
     private synchronized void unRegister() {
-        Log.v(TAG, "unRegister() ##mHaveRegister = " + mHaveRegister);
+        Log.i(TAG, "unRegister() ##mHaveRegister = " + mHaveRegister);
 
         if (mHaveRegister == STATE_UNREGISTERED
                 || mHaveRegister == STATE_UNREGISTERING) {
@@ -211,8 +216,8 @@ public abstract class WifiAdmin {
     }
 
     public WifiConfiguration createWifiInfo(String SSID, String password, int type) {
-
-        Log.v(TAG, "SSID = " + SSID + "## Password = " + password + "## Type = " + type);
+        Log.i(TAG,"createWifiInfo");
+        Log.i(TAG, "SSID = " + SSID + "## Password = " + password + "## Type = " + type);
 
         WifiConfiguration config = new WifiConfiguration();
         config.allowedAuthAlgorithms.clear();
@@ -232,7 +237,6 @@ public abstract class WifiAdmin {
             config.wepKeys[0] = "";
             config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
             config.wepTxKeyIndex = 0;
-
         } else if (type == TYPE_WEP) {  //  WIFICIPHER_WEP
             config.hiddenSSID = true;
             config.wepKeys[0] = "\"" + password + "\"";
@@ -404,7 +408,7 @@ public abstract class WifiAdmin {
     }
 
     //链接指定的WiFi
-    public static void connectToWifi(final Context context){
+    public static void connectToWifi(final Activity context){
         WifiAdmin  mWifiAdmin = new WifiAdmin(context) {
             @Override
             public void myUnregisterReceiver(BroadcastReceiver receiver) {
@@ -417,15 +421,19 @@ public abstract class WifiAdmin {
             }
             @Override
             public void onNotifyWifiConnected() {
-                Log.v(TAG, "have connected success!");
+                Log.i(TAG, "have connected success!");
             }
             @Override
             public void onNotifyWifiConnectFailed() {
-                Log.v(TAG, "have connected failed!");
+                Log.i(TAG, "have connected failed!");
             }
         };
         mWifiAdmin.openWifi();
         // 连的WIFI热点是用WPA方式保护
-        mWifiAdmin.addNetwork(mWifiAdmin.createWifiInfo(DeviceOffLineFileUtil.HOST_SPOT_SSID, DeviceOffLineFileUtil.HOST_SPOT_PASS_WORD, WifiAdmin.TYPE_WPA));
+        /*WifiConfiguration amsu = mWifiAdmin.createWifiInfo("amsu", "20151211", WifiAdmin.TYPE_WPA);
+        Log.i(TAG,"amsu:"+amsu);
+        mWifiAdmin.addNetwork(amsu)*/;
+       mWifiAdmin.addNetwork(mWifiAdmin.createWifiInfo(DeviceOffLineFileUtil.HOST_SPOT_SSID, DeviceOffLineFileUtil.HOST_SPOT_PASS_WORD, WifiAdmin.TYPE_WPA));
     }
 }
+

@@ -15,6 +15,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Timer;
@@ -25,7 +26,7 @@ import java.util.TimerTask;
  */
 
 public class DeviceOffLineFileUtil {
-    public final static String HOST_SPOT_SSID = "AmsuCharge";
+    public final static String HOST_SPOT_SSID = "ESP8266";
     public final static String HOST_SPOT_PASS_WORD = "0123456789";
 
     public final static String readDeviceVersion = "FF0100060616";
@@ -113,6 +114,20 @@ public class DeviceOffLineFileUtil {
 
     //将字节数组转换为16进制字符串
     public static String binaryToHexString(byte[] bytes,int length) {
+        String hexStr = "0123456789ABCDEF";
+        String result = "";
+        String hex = "";
+        for (int i=0;i<length;i++) {
+            byte b = bytes[i];
+            hex = String.valueOf(hexStr.charAt((b & 0xF0) >> 4));
+            hex += String.valueOf(hexStr.charAt(b & 0x0F));
+            result += hex + " ";
+        }
+        return result;
+    }
+
+    //将字节数组转换为16进制字符串
+    public static String binaryToHexString(Byte[] bytes,int length) {
         String hexStr = "0123456789ABCDEF";
         String result = "";
         String hex = "";
@@ -238,7 +253,7 @@ public class DeviceOffLineFileUtil {
     private static long timeSpan = 1000;
     private static TimerTask mTimerTask;
     private static int TimeOutCountIndex;
-    private static int TimeOutAllCount = 3;
+    private static float TimeOutAllCount = 1.5f;
 
     public static void setTransferTimeOverTime(final OnTimeOutListener onTimeOutListener){
         mTimerTask=new TimerTask() {
@@ -293,6 +308,8 @@ public class DeviceOffLineFileUtil {
             mAllData.addAll(integers);
         }
     }
+
+
 
     //写到文件里，二进制方式写入
     public static void addRemainderEcgDataToList(String hexStringData,int onePackageReadLength,List<Integer> mAllData){
@@ -350,18 +367,78 @@ public class DeviceOffLineFileUtil {
         return isWriteSuccess;
     }
 
+    /*//写到文件里，二进制方式写入
+    public static boolean writeEcgByteDataToBinaryFile(List<Byte> byteListData,String fileName){
+        Byte[] byteData = new Byte[byteListData.size()];
+        byteListData.toArray(byteData);
+        Log.i(TAG,"byteData.length: "+byteData.length);
+
+
+        String hexStringData = binaryToHexString(byteData, byteData.length);
+
+        Log.i(TAG,"hexStringData: "+hexStringData);
+
+        List<Integer> integerListData = new ArrayList<>();
+        addEcgDataToList(hexStringData,integerListData);
+        Log.i(TAG,"integerListData.size(): "+integerListData.size());
+
+        String filePath = Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+ fileName;
+        WriteReadDataToFileStrategy writeReadDataToFileStrategy = new WriteReadDataToBinaryFile();
+        boolean isWriteSuccess = writeReadDataToFileStrategy.writeDataToFile(integerListData, filePath);
+        writeFileListToSP(filePath);
+        return isWriteSuccess;
+    }*/
+
+    //写到文件里，二进制方式写入
+    public static boolean writeEcgByteDataToBinaryFile(List<Byte> byteListData,String fileName){
+        Byte[] byteData = new Byte[byteListData.size()];
+        byteListData.toArray(byteData);
+        Log.i(TAG,"byteData.length: "+byteData.length);
+
+
+
+
+
+
+
+        /*String filePath = Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+ fileName;
+        WriteReadDataToFileStrategy writeReadDataToFileStrategy = new WriteReadDataToBinaryFile();
+        boolean isWriteSuccess = writeReadDataToFileStrategy.writeByteDataToFile(byteData, filePath);
+
+
+
+
+
+        writeFileListToSP(filePath);*/
+
+        return false;
+    }
+
     private static void writeFileListToSP(String filePath) {
+        Log.i(TAG,"filePath:"+filePath);
+        Log.i(TAG,"writeFileListToSP");
         List<String> readFileToSP = getUploadFileToSP();
+        if (readFileToSP==null){
+            Log.i(TAG,"sp文件列表问空");
+        }
+
+        Log.i(TAG,"readFileToSP:"+readFileToSP);
+
         if (readFileToSP.size()==0){
             readFileToSP.add(filePath);
         }
         else {
+            boolean isAdd = true;
             for (String s:readFileToSP){
-                if (!filePath.equals(s)){
-                    readFileToSP.add(filePath);
+                if (filePath.equals(s)){
+                    isAdd = false;
                 }
             }
+            if (isAdd){
+                readFileToSP.add(filePath);
+            }
         }
+        Log.i(TAG,"readFileToSP:"+readFileToSP);
         putUploadFileToSP(readFileToSP);
     }
 
@@ -376,6 +453,7 @@ public class DeviceOffLineFileUtil {
     }
 
     public static void putUploadFileToSP(List<String> fileNameList){
+        Log.i(TAG,"putUploadFileToSP");
         Gson gson = new Gson();
         String fileNameListString = gson.toJson(fileNameList);
         MyUtil.putStringValueFromSP("fileNameListString",fileNameListString);

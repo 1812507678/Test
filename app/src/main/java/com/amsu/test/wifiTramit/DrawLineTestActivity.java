@@ -3,6 +3,7 @@ package com.amsu.test.wifiTramit;
 import android.app.Activity;
 import android.nfc.Tag;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
@@ -28,7 +29,7 @@ import java.util.List;
  */
 
 public class DrawLineTestActivity extends BaseActivity {
-    private static final String TAG = "TestActivity";
+    private static final String TAG = "DrawLineTestActivity";
     private EcgView pv_ecg_path;
     private int mEcgGroupSize;
     private int mAllTimeAtSecond;
@@ -63,6 +64,7 @@ public class DrawLineTestActivity extends BaseActivity {
 
         final List<String> uploadFileToSP = DeviceOffLineFileUtil.getUploadFileToSP();
         Log.i(TAG,"uploadFileToSP.size()"+uploadFileToSP.size());
+        Log.i(TAG,"uploadFileToSP"+uploadFileToSP);
 
         List<String> fileListNeed = new ArrayList<>();
         for (String s:uploadFileToSP){
@@ -78,7 +80,7 @@ public class DrawLineTestActivity extends BaseActivity {
                 String filePath = uploadFileToSP.get(position);
                 String[] split = filePath.split("/");
                 String fileName = split[split.length - 1];
-                MyUtil.showToask(DrawLineTestActivity.this,fileName);
+                //MyUtil.showToask(DrawLineTestActivity.this,fileName);
 
                 readFileData(filePath);
             }
@@ -133,7 +135,7 @@ public class DrawLineTestActivity extends BaseActivity {
     }
 
     private void readFileData(final String fileName) {
-        MyUtil.showDialog("读取数据",this);
+        //MyUtil.showDialog("读取数据",this);
 
         final File file = new File(fileName);
         if (file.exists()){
@@ -141,7 +143,8 @@ public class DrawLineTestActivity extends BaseActivity {
                 @Override
                 public void run() {
                     //List<Integer> integerList = DeviceOffLineFileUtil.readEcgDataToTextFileNew(fileName);
-                    List<Integer> integerList = DeviceOffLineFileUtil.readEcgDataToBinaryFile(fileName);
+                    //List<Integer> integerList = DeviceOffLineFileUtil.readEcgDataToBinaryFile(fileName);
+                    List<Integer> integerList = DeviceOffLineFileUtil.readEcgDataToBinaryFile(Environment.getExternalStorageDirectory().getAbsolutePath()+"/20170508125326.ecg");
                     mEcgGroupSize = integerList.size() / 10;
                     mAllTimeAtSecond = (int) (integerList.size()/(150*1f));  //计算总的时间秒数，1s为150帧，即为150个数据点
                     mAllTimeString = calcuEcgDataTimeAtSecond(mAllTimeAtSecond);
@@ -153,15 +156,14 @@ public class DrawLineTestActivity extends BaseActivity {
                     });
 
                     Log.i(TAG,"integerList.size(): "+integerList.size());
-                    MyUtil.hideDialog();
+                    //MyUtil.hideDialog();
                     startDrawLine(integerList);
                 }
             }).start();
-
         }
         else {
             //文件不存在，没有上传
-            MyUtil.showToask(this,"该文件没有上传");
+            //MyUtil.showToask(this,"该文件没有上传");
         }
     }
 

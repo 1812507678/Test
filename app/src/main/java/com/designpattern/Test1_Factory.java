@@ -14,7 +14,24 @@ public class Test1_Factory extends Activity{
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
 
+    class TvControl{
+        private final  int power_on = 1;
+        private final  int power_off =2 ;
+        private int mState;
 
+        private void turnOn(){
+            mState = power_on;
+            if (mState==power_off){
+
+            }
+        }
+        private void turnOff(){
+            mState = power_off;
+            if (mState==power_on){
+
+            }
+        }
     }
 }

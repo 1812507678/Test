@@ -3,6 +3,7 @@ package com.amsu.test.wifiTramit.uilt;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -58,5 +59,20 @@ public class WriteReadDataToBinaryFile implements WriteReadDataToFileStrategy {
             IOUtil.closeIOStream(dataInputStream);
         }
         return integerList;
+    }
+
+    @Override
+    public boolean writeByteDataToFile(byte[] bytes, String fileName) {
+        boolean isWriteSuccess = false;
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream(fileName);
+            fileOutputStream.write(bytes,0,bytes.length);
+            isWriteSuccess = true;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return isWriteSuccess;
     }
 }

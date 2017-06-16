@@ -17,6 +17,7 @@ import com.test.objects.HeartRateResult;
 import com.test.utils.DiagnosisNDK;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +25,24 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import com.test.objects.HeartRateResult;
+import com.test.utils.DiagnosisNDK;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.os.Environment;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 public class MainActivity extends Activity {
 
@@ -48,29 +67,110 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        int []test = {100,40,67,89,10,100,56,65,100,100,
-                100,40,67,89,10,100,56,65,100,100,
-                23,40,67,89,10,100,56,65,77,100,
-                100,40,67,89,10,100,56,65,100,100,
-                100,40,67,89,10,100,56,65,100,100,
-                100,40,67,89,10,78,56,65,100,100,
-                100,40,67,55,10,100,56,65,100,100,
-                100,40,67,99,10,22,56,65,100,100,
-                100,40,67,89,10,44,56,65,100,100,
-                100,40,67,89,10,100,56,65,100,100,
-                100,33,67,77,10,89,56,65,100,100,
-                100,40,67,89,10,100,56,65,100,88,
-                44,67,89,10,100,56,65,100,100,56,
-                100,40,67,89,10,100,56,65,100,100,
-                100,40,67,89,10,100,56,65,100,100};
+        Log.i(TAG,"ok");
+
+        String ecgLocalFileName = Environment.getExternalStorageDirectory().getAbsolutePath()+"/20170516101758.ecg";
+
+        Log.i(TAG,"ecgLocalFileName:"+ecgLocalFileName);
+
+        File file = new File(ecgLocalFileName);
+        int[]  ecgDataList = readEcgDataFromFile(file);
+        int ll = ecgDataList.length;
+
+        int[] ecgDataList1 = new int[ecgDataList.length*3];
+
+        int tmp =ecgDataList.length;
+
+        for (int i=0;i<ll;i++){
+            ecgDataList1[ll+i] = ecgDataList[i];
+            ecgDataList1[ll*2+i] = ecgDataList[i];
+            //ecgDataList1[ll*3+i] = ecgDataList[i];
+        }
 
 
-        HeartRateResult ecgResult = DiagnosisNDK.AnalysisEcg(test, test.length, 150);
-        Log.i(TAG,"ecgResult:"+ecgResult.toString());
+        Log.i(TAG,"ecgDataList.size(): ====================="+ ecgDataList1.length);
+        /*int[] calcuData = new int[ecgDataList.size()];
+        for (int i=0;i<ecgDataList.size();i++ ){
+            calcuData[i] = ecgDataList.get(i);
+        }*/
 
-        //int i = countEcgRate(test, test.length, 1);
-        //Log.i(TAG,"i:"+i);
 
+        Log.i(TAG,"DiagnosisNDK.AnalysisEcg: =====================");
+        HeartRateResult heartRateResult = DiagnosisNDK.AnalysisEcg(ecgDataList1, ecgDataList1.length,150);
+
+        Log.i(TAG,"heartRateResult:"+heartRateResult.toString());
+
+        new Thread(){
+            @Override
+            public void run() {
+                super.run();
+
+
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+
+
+                    }
+                });
+            }
+        }.start();
+
+
+
+
+
+
+        //ecgDataList.addAll(ecgDataList);
+
+        //ecgDataList.addAll(ecgDataList);
+
+        //ecgDataList.addAll(ecgDataList);
+
+
+
+
+
+    }
+
+
+    //从文件中读取心电数据
+    private int[] readEcgDataFromFile(File file) {
+
+        int[] calcuData = null;
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            DataInputStream dataInputStream = new DataInputStream(fileInputStream); //读取二进制文件
+
+            byte[] bytes = new byte[1024*1024];
+            Log.i(TAG,"dataInputStream.available():"+dataInputStream.available());
+            Log.i(TAG,"new Date(System.currentTimeMillis()):"+new Date(System.currentTimeMillis()));
+
+           calcuData = new int[dataInputStream.available()/2];  //心电数据
+
+            while(dataInputStream.available() >0){
+                int read = dataInputStream.read(bytes);
+                for (int i = 0; i < read/2-1; i++) {
+                    bytes[0] = bytes[i*2];
+                    bytes[1] = bytes[i*2+1];
+                    //滤波处理
+                    int temp = EcgFilterUtil.miniEcgFilterLp((int) getShortByTwoBytes(bytes[0],bytes[1]), 0);
+                    temp = EcgFilterUtil.miniEcgFilterHp(temp, 0);
+                    calcuData[i] = temp;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return calcuData;
+    }
+
+    public static short getShortByTwoBytes(byte argB1, byte argB2) {
+        return (short) (argB1| (argB2 << 8));
     }
 
     int fir(int d) {

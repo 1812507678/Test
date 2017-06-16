@@ -9,4 +9,7 @@ import java.util.List;
 public interface WriteReadDataToFileStrategy {
     boolean writeDataToFile(List<Integer> integerList,String fileName);
     List<Integer> readDataFromFile(String fileName);
+
+    boolean writeByteDataToFile(byte[] bytes,String fileName);
+
 }

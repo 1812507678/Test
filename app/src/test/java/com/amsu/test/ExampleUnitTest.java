@@ -2,7 +2,9 @@ package com.amsu.test;
 
 import org.junit.Test;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -19,25 +21,22 @@ public class ExampleUnitTest {
 
     @Test
     public void MyTest(){
-        try {
-            Date date = (Date) Class.forName(Date.class.getName()).newInstance();
-            System.out.println(date);
-
-            int a;
-            List<Integer> integers = new ArrayList<>();
-            integers.add(2);
-
-            Integer integer = integers.get(a = 0);
-            System.out.println(integer);
-            System.out.println(a);
-
-
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        SimpleDateFormat formatter = new SimpleDateFormat("yy MM dd HH mm ss");
+        Date curDate = new Date();
+        String dateString = formatter.format(curDate);
+        System.out.println(dateString);
+        String[] split = dateString.split(" ");
+        String dateHexString = "";
+        for (String s:split){
+            String hex = Integer.toHexString(Integer.parseInt(s));
+            if (hex.length()==1){
+                hex ="0"+hex;
+            }
+            dateHexString += hex;
+            System.out.println(hex);
         }
+        System.out.println(dateHexString);
+
+
     }
 }

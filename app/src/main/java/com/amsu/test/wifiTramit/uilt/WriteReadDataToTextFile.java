@@ -57,6 +57,12 @@ public class WriteReadDataToTextFile implements WriteReadDataToFileStrategy {
         return integerList;
     }
 
+    @Override
+    public boolean writeByteDataToFile(byte[] bytes, String fileName) {
+
+        return false;
+    }
+
     private void parStringDataToList(String fileStringData,List<Integer> integerList) {
         String[] split = fileStringData.split(" ");
         for (String s:split){

@@ -1,22 +1,16 @@
 package com.amsu.test.wifiTramit;
 
-import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.net.DhcpInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.Environment;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class TestActivity extends BaseActivity {
+public class TestActivity1 extends BaseActivity {
 
     private static final String TAG = "TestActivity";
     private TextView servic_info;
@@ -63,7 +57,7 @@ public class TestActivity extends BaseActivity {
     int onePackageReadLength = 0;
     List<Integer> onePackageData = new ArrayList<>();
     String onePackageDataHexString = "";
-    private List<Byte> mAllData = new ArrayList<>();
+    private List<Integer> mAllData = new ArrayList<>();
     private TextView tv_filelength;
     private TextView tv_uploadprogress;
     private String currentUploadFileName;
@@ -76,9 +70,6 @@ public class TestActivity extends BaseActivity {
         setContentView(R.layout.activity_test);
 
         initView();
-        /*byte n = 2;
-        Byte aByte  = n;
-        mAllData.add(n);*/
 
 
     }
@@ -104,7 +95,7 @@ public class TestActivity extends BaseActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String fileName = stringList.get(position);
                 currentUploadFileName = fileName;
-                Toast.makeText(TestActivity.this,fileName+" 开始上传",Toast.LENGTH_LONG).show();
+                Toast.makeText(TestActivity1.this,fileName+" 开始上传",Toast.LENGTH_LONG).show();
                 //String fileName = "20170413172800.ecg";
                 String startOrder = "FF040018";
                 String deviceOrder = startOrder + DeviceOffLineFileUtil.stringToHexString(fileName) + DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum("FF 04 00 18",fileName)+"16";
@@ -112,6 +103,15 @@ public class TestActivity extends BaseActivity {
                 sendReadDeviceOrder(deviceOrder);
                 isStartUploadData = false;
                 recive_msg.setText("");
+            }
+        });
+
+        list_item.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                String fileName = stringList.get(position);
+                deleteOneFile(fileName);
+                return false;
             }
         });
 
@@ -130,10 +130,9 @@ public class TestActivity extends BaseActivity {
             @Override
             public void run() {
                 super.run();
-                WifiAdmin.connectToWifi(TestActivity.this);
+                WifiAdmin.connectToWifi(TestActivity1.this);
             }
         }.start();
-
     }
 
     public void createSocket(View view) {
@@ -206,12 +205,12 @@ public class TestActivity extends BaseActivity {
                     Log.i(TAG,"length:" + length);
                     if (isStartUploadData){
                         DeviceOffLineFileUtil.stopTime();
-                        //final String toHexString = DeviceOffLineFileUtil.binaryToHexString(bytes, length);
+                        final String toHexString = DeviceOffLineFileUtil.binaryToHexString(bytes, length);
                         //final String s = DeviceOffLineFileUtil.binaryToHexString(bytes, length,"");
-                        //Log.i(TAG,"收到数据:" + toHexString);
+                        Log.i(TAG,"收到数据:" + toHexString);
                         //开始传输数据了
                         //dealWithDeviceFileUpload(toHexString,length);
-                        dealWithDeviceFileUploadByte(length,bytes);
+                        dealWithDeviceFileUpload(length,toHexString);
                         DeviceOffLineFileUtil.startTime();
                     }
                     else {
@@ -222,10 +221,10 @@ public class TestActivity extends BaseActivity {
                         if (toHexString.startsWith("FF 81")){  //版本号：
                             dealWithDeviceVersion(toHexString);
                         }
-                        else if (toHexString.startsWith("FF 82")){ //设备id:
+                        else if (toHexString.startsWith("FF 82")){//设备id:
                             dealWithDeviceID(toHexString);
                         }
-                        else if (toHexString.startsWith("FF 83")){ //文件列表：
+                        else if (toHexString.startsWith("FF 83")){  //文件列表：
                             dealWithDeviceFileList(toHexString);
                         }
                         else if (toHexString.startsWith("FF 84")){  //文件长度：
@@ -234,7 +233,7 @@ public class TestActivity extends BaseActivity {
                         else if (toHexString.startsWith("FF 85")){  //上传文件：
                             //startTimeOutTiming();
                             //dealWithDeviceFileUpload(toHexString,length);
-                            dealWithDeviceFileUploadByte(length,bytes);
+                            dealWithDeviceFileUpload(length,toHexString);
                             DeviceOffLineFileUtil.startTime();
                             isStartUploadData = true;
                         }
@@ -255,6 +254,10 @@ public class TestActivity extends BaseActivity {
                             });
                         }
                     }
+
+
+
+
 
                     /*runOnUiThread(new Runnable() {
                         @Override
@@ -422,6 +425,13 @@ public class TestActivity extends BaseActivity {
         String startOrder = "FF060018";
         String deviceOrder = startOrder + DeviceOffLineFileUtil.stringToHexString(fileName) + DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum("FF 06 00 18",fileName)+"16";
         Log.i(TAG,"deviceOrder:"+deviceOrder);
+        sendReadDeviceOrder(deviceOrder);
+    }
+
+    public void deleteOneFile(String fileName) {
+        String startOrder = "FF060018";
+        String deviceOrder = startOrder + DeviceOffLineFileUtil.stringToHexString(fileName) + DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum("FF 06 00 18",fileName)+"16";
+        Log.i(TAG,"删除文件deviceOrder:"+deviceOrder);
         sendReadDeviceOrder(deviceOrder);
     }
 
@@ -636,7 +646,7 @@ public class TestActivity extends BaseActivity {
                 });
 
                 //writeEcgDataToBinaryFile(onePackageDataHexString,16);
-                //DeviceOffLineFileUtil.addEcgDataToList(onePackageDataHexString,mAllData);
+                DeviceOffLineFileUtil.addEcgDataToList(onePackageDataHexString,mAllData);
                 //onePackageData.clear();
                 onePackageReadLength = 0;
                 onePackageDataHexString = "";
@@ -661,7 +671,7 @@ public class TestActivity extends BaseActivity {
             if (onePackageReadLength == mFileLastRemainder+(int) Math.ceil(mFileLastRemainder/512.0)*14){
                 Log.i(TAG,"余数上传成功:"+mUploadFileCountIndex);
                 //则文件数据传完，isStartUploadData置为false
-                //DeviceOffLineFileUtil.addRemainderEcgDataToList(onePackageDataHexString,onePackageReadLength, mAllData);
+                DeviceOffLineFileUtil.addRemainderEcgDataToList(onePackageDataHexString,onePackageReadLength, mAllData);
                 isStartUploadData = false;
                 onePackageReadLength = 0;
                 onePackageDataHexString = "";
@@ -671,82 +681,6 @@ public class TestActivity extends BaseActivity {
                 uploadCurrentFileSuccess();
 
 
-            }
-
-        }
-
-    }
-
-
-    //文件上传
-    private void dealWithDeviceFileUploadByte(int length, byte[] bytes) {
-        if (startTimeMillis==0){
-            startTimeMillis = System.currentTimeMillis();
-        }
-        if (mUploadFileCountIndex<mAllFileCount){
-            //前几次整数上传
-
-            //int allHexlength = Integer.parseInt(allHexString, 16);
-
-            //List<Integer> geIntEcgaArr = ECGUtil.geIntEcgaArrList(allHexString, " ", 12 ,allHexlength);
-            //onePackageData.addAll(geIntEcgaArr);
-            onePackageReadLength += length;
-            //onePackageDataHexString += toHexString;
-            Log.i(TAG,"分包 当前收到总长度length:"+onePackageReadLength);
-            if (onePackageReadLength==mOneUploadMaxByte+16*14){
-                Log.i(TAG,"当前包上传成功:"+mUploadFileCountIndex);
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        tv_uploadprogress.setText("当前进度:"+mUploadFileCountIndex);
-                    }
-                });
-
-                //writeEcgDataToBinaryFile(onePackageDataHexString,16);
-                //DeviceOffLineFileUtil.addEcgDataToList(bytes,mAllData);
-
-                for (byte b:bytes){
-                    mAllData.add(b);
-                }
-
-                //onePackageData.clear();
-                onePackageReadLength = 0;
-                onePackageDataHexString = "";
-                uploadNextPackageData();
-
-                if (mUploadFileCountIndex==mAllFileCount-1 && mFileLastRemainder==0){
-                    //上传完成
-                    uploadCurrentFileSuccess();
-                }
-            }
-            else if (mOneUploadMaxByte-512+(16-1)*14<onePackageReadLength && onePackageReadLength<mOneUploadMaxByte+16*14){
-
-            }
-        }
-        else if (mUploadFileCountIndex==mAllFileCount){
-            //int allHexlength = Integer.parseInt(allHexString, 16);
-
-            //List<Integer> geIntEcgaArr = ECGUtil.geIntEcgaArrList(allHexString, " ", 12 ,uploadLengthInt);
-            //onePackageData.addAll(geIntEcgaArr);
-            onePackageReadLength += length;
-            //onePackageDataHexString += toHexString;
-            Log.i(TAG,"余数 当前包收到总长度length:"+onePackageReadLength);
-            //Log.i(TAG,"mFileLastRemainder:"+mFileLastRemainder);
-            if (onePackageReadLength == mFileLastRemainder+(int) Math.ceil(mFileLastRemainder/512.0)*14){
-                Log.i(TAG,"余数上传成功:"+mUploadFileCountIndex);
-                //则文件数据传完，isStartUploadData置为false
-                //DeviceOffLineFileUtil.addRemainderEcgDataToList(onePackageDataHexString,onePackageReadLength, mAllData);
-                isStartUploadData = false;
-                onePackageReadLength = 0;
-                onePackageDataHexString = "";
-                //writeEcgDataToBinaryFile(onePackageData);
-                //onePackageData.clear();
-
-                for (byte b:bytes){
-                    mAllData.add(b);
-                }
-                uploadCurrentFileSuccess();
             }
 
         }
@@ -778,9 +712,9 @@ public class TestActivity extends BaseActivity {
             }
         });
 
-        Log.i(TAG,"mAllData.size(): "+mAllData.size());
-        //boolean isWriteSuccess = DeviceOffLineFileUtil.writeEcgByteDataToBinaryFile(mAllData, currentUploadFileName);
-        //Log.i(TAG,"写入文件isWriteSuccess:"+isWriteSuccess);
+        //boolean isWriteSuccess = DeviceOffLineFileUtil.writeEcgDataToBinaryFile(mAllData, currentUploadFileName);
+        boolean isWriteSuccess = DeviceOffLineFileUtil.writeEcgDataToTextFileNew(mAllData, currentUploadFileName);
+        Log.i(TAG,"写入文件isWriteSuccess:"+isWriteSuccess);
 
     }
 
