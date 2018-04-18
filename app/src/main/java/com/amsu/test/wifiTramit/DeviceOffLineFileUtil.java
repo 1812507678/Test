@@ -9,14 +9,9 @@ import com.amsu.test.wifiTramit.uilt.WriteReadDataToTextFile;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -471,5 +466,28 @@ public class DeviceOffLineFileUtil {
         return new ArrayList<>();
     }
 
+    public static String asciiToString(String value)
+    {
+        StringBuffer sbu = new StringBuffer();
+        String[] chars = value.split(",");
+        for (int i = 0; i < chars.length; i++) {
+            sbu.append((char) Integer.parseInt(chars[i]));
+        }
+        return sbu.toString();
+    }
+    public static String byteToString(byte[]tBytes) {
+        String nRcvString;
+        StringBuffer tStringBuf=new StringBuffer ();
+
+        char[]tChars=new char[tBytes.length];
+
+        for(int i=0;i<tBytes.length;i++)
+            tChars[i]=(char)tBytes[i];
+
+        tStringBuf.append(tChars);
+        nRcvString=tStringBuf.toString();         //nRcvString从tBytes转成了String类型的"123"
+
+        return nRcvString;
+    }
 
 }

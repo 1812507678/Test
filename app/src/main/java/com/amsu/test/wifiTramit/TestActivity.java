@@ -1,22 +1,16 @@
 package com.amsu.test.wifiTramit;
 
-import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.net.DhcpInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.Environment;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -115,6 +109,15 @@ public class TestActivity extends BaseActivity {
             }
         });
 
+        list_item.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                String fileName = stringList.get(position);
+                deleteOneFile(fileName);
+                return false;
+            }
+        });
+
         DeviceOffLineFileUtil.setTransferTimeOverTime(new DeviceOffLineFileUtil.OnTimeOutListener() {
             @Override
             public void onTomeOut() {
@@ -125,15 +128,22 @@ public class TestActivity extends BaseActivity {
 
     }
 
+    public void deleteOneFile(String fileName) {
+        String startOrder = "FF060018";
+        String deviceOrder = startOrder + DeviceOffLineFileUtil.stringToHexString(fileName) + DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum("FF 06 00 18",fileName)+"16";
+        Log.i(TAG,"删除文件deviceOrder:"+deviceOrder);
+        sendReadDeviceOrder(deviceOrder);
+    }
+
     public void connectToWifi(View view) {
-        new Thread(){
+        /*new Thread(){
             @Override
             public void run() {
                 super.run();
                 WifiAdmin.connectToWifi(TestActivity.this);
             }
-        }.start();
-
+        }.start();*/
+        WifiAdmin.connectToWifi(TestActivity.this);
     }
 
     public void createSocket(View view) {

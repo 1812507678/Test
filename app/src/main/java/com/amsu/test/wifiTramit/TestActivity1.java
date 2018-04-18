@@ -70,8 +70,6 @@ public class TestActivity1 extends BaseActivity {
         setContentView(R.layout.activity_test);
 
         initView();
-
-
     }
 
     private void initView() {
@@ -100,7 +98,7 @@ public class TestActivity1 extends BaseActivity {
                 String startOrder = "FF040018";
                 String deviceOrder = startOrder + DeviceOffLineFileUtil.stringToHexString(fileName) + DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum("FF 04 00 18",fileName)+"16";
                 Log.i(TAG,"deviceOrder:"+deviceOrder);
-                sendReadDeviceOrder(deviceOrder);
+                sendHexStringDeviceOrder(deviceOrder);
                 isStartUploadData = false;
                 recive_msg.setText("");
             }
@@ -143,6 +141,8 @@ public class TestActivity1 extends BaseActivity {
         String serverAddress = intToIp(info.serverAddress);
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 设置日期格式
         String message = "Hello this is dawin ! send time:" + df.format(new Date());
+
+        //serverAddress = "192.168.1.222";
         new Sender(serverAddress, message).start();
         String msg = "ip:" + ip + "serverAddress:" + serverAddress + info;
         //servic_info.setText(msg);
@@ -157,6 +157,48 @@ public class TestActivity1 extends BaseActivity {
 
     boolean isStartUploadData;
 
+   /* public void connectToSpecifyWifi(View view) {
+        //String sendWifiInfoMsg = "set:amsuname=\"amsu2.4\",amsucode=\"20151211\",stationip=\"223\"";
+        String sendWifiInfoMsg = "set:amsuname=\"amsu2.4\",amsucode=\"20151211\",stationip=\"stationMAC mode\"";
+        sendAsciiStringDeviceOrder(sendWifiInfoMsg);
+    }*/
+
+
+    public void sendWifiOrder(View view) {
+        String sendWifiInfoMsg = "set:amsuname=\"amsu2.4\",amsucode=\"20151211\",stationip=\"223\"";
+        sendAsciiStringDeviceOrder(sendWifiInfoMsg);
+    }
+
+    public void confirmConnectionValid(View view) {
+        String sendConfirmConnectionValidMsg = "set:get stationip valid";
+        sendAsciiStringDeviceOrder(sendConfirmConnectionValidMsg);
+    }
+
+    public void wifiReset(View view) {
+        String sendResetMsg = "set:reset";
+        sendAsciiStringDeviceOrder(sendResetMsg);
+    }
+
+    public void restoreFactory(View view) {
+        String sendRestoreFactory = "set:restore factory";
+        sendAsciiStringDeviceOrder(sendRestoreFactory);
+    }
+
+    public static String stringToAscii(String value)
+    {
+        StringBuffer sbu = new StringBuffer();
+        char[] chars = value.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            if(i != chars.length - 1)
+            {
+                sbu.append((int)chars[i]).append(",");
+            }
+            else {
+                sbu.append((int)chars[i]);
+            }
+        }
+        return sbu.toString();
+    }
 
 
     /* 客户端发送数据 */
@@ -186,6 +228,7 @@ public class TestActivity1 extends BaseActivity {
                 });
             } catch (IOException e) {
                 e.printStackTrace();
+                Log.e(TAG,"新建socket失败" + e);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -215,8 +258,15 @@ public class TestActivity1 extends BaseActivity {
                     }
                     else {
                         final String toHexString = DeviceOffLineFileUtil.binaryToHexString(bytes, length);
+                        Log.i(TAG,"toHexString:"+toHexString);
+
                         //final String s = DeviceOffLineFileUtil.binaryToHexString(bytes, length,"");
-                        Log.i(TAG,"收到数据:" + toHexString);
+                        //Log.i(TAG,"收到数据:" + toHexString);
+
+
+                        String string = new String(bytes,0,length);
+                        Log.i(TAG,"string:"+string);
+
 
                         if (toHexString.startsWith("FF 81")){  //版本号：
                             dealWithDeviceVersion(toHexString);
@@ -334,28 +384,50 @@ public class TestActivity1 extends BaseActivity {
                 e.printStackTrace();
             }
         }*/
-        sendReadDeviceOrder(DeviceOffLineFileUtil.readDeviceVersion);
+        sendHexStringDeviceOrder(DeviceOffLineFileUtil.readDeviceVersion);
     }
 
     public void getDeviceID(View view) {
-        sendReadDeviceOrder(DeviceOffLineFileUtil.readDeviceID);
+        sendHexStringDeviceOrder(DeviceOffLineFileUtil.readDeviceID);
     }
 
     public void getFileList(View view) {
-        sendReadDeviceOrder(DeviceOffLineFileUtil.readDeviceFileList);
+        sendHexStringDeviceOrder(DeviceOffLineFileUtil.readDeviceFileList);
     }
 
     //给设备发送16进制指令
-    private void sendReadDeviceOrder(String deviceOrder) {
-        byte[] bytes = DeviceOffLineFileUtil.hexStringToBytes(deviceOrder);
+    private void sendHexStringDeviceOrder(String hexDeviceOrderString) {
+        Log.i(TAG,"发送16进制指令：" + hexDeviceOrderString);
+        byte[] bytes = DeviceOffLineFileUtil.hexStringToBytes(hexDeviceOrderString);
+        sendOrder(bytes);
+    }
+
+    //给设备发送ASCII命令
+    private void sendAsciiStringDeviceOrder(String asciiDeviceOrderString) {
+        Log.i(TAG,"发送ASCII命令：" + asciiDeviceOrderString);
+        byte[] bytes = asciiDeviceOrderString.getBytes();
+        sendOrder(bytes);
+    }
+
+    private void sendOrder(final byte[] bytes){
         if (socketWriter!=null){
-            try {
-                socketWriter.write(bytes);
-                Log.i(TAG,"发送命令：" + deviceOrder);
-                socketWriter.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            new Thread(){
+                @Override
+                public void run() {
+                    super.run();
+                    try {
+                        Thread.sleep(10);
+                        socketWriter.write(bytes);
+                        socketWriter.flush();
+                        Log.i(TAG,"发送成功");
+                    } catch (IOException e) {
+                        Log.i(TAG,"发送命令异常："+e);
+                        e.printStackTrace();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }.start();
         }
     }
 
@@ -365,7 +437,7 @@ public class TestActivity1 extends BaseActivity {
         String startOrder = "FF040018";
         String deviceOrder = startOrder + DeviceOffLineFileUtil.stringToHexString(fileName) + DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum("FF 04 00 18",fileName)+"16";
         Log.i(TAG,"deviceOrder:"+deviceOrder);
-        sendReadDeviceOrder(deviceOrder);
+        sendHexStringDeviceOrder(deviceOrder);
     }
 
     public void uploadFile(View view) {
@@ -380,7 +452,7 @@ public class TestActivity1 extends BaseActivity {
             String startOrder = "FF05000e"+offsetHexLenght+fileHexLenght;
             String deviceOrder = startOrder+DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum(startOrder)+"16";
             Log.i(TAG,mUploadFileCountIndex+"分段上传deviceOrder:"+deviceOrder);
-            sendReadDeviceOrder(deviceOrder);
+            sendHexStringDeviceOrder(deviceOrder);
 
         }
         else {
@@ -389,7 +461,7 @@ public class TestActivity1 extends BaseActivity {
             String startOrder = "FF05000e"+offsetHexLenght+fileHexLenght;
             String deviceOrder = startOrder+DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum(startOrder)+"16";
             Log.i(TAG,"一次上传deviceOrder:"+deviceOrder);
-            sendReadDeviceOrder(deviceOrder);
+            sendHexStringDeviceOrder(deviceOrder);
         }
 
 
@@ -406,7 +478,7 @@ public class TestActivity1 extends BaseActivity {
             String startOrder = "FF05000e"+offsetHexLenght+fileHexLenght;
             String deviceOrder = startOrder+DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum(startOrder)+"16";
             Log.i(TAG,i+"分段上传deviceOrder:"+deviceOrder);
-            sendReadDeviceOrder(deviceOrder);
+            sendHexStringDeviceOrder(deviceOrder);
         }
         if (remainder>0){
             String offsetHexLenght = DeviceOffLineFileUtil.getFormatHexFileLenght(8, oneUploadMaxByte*count);
@@ -415,7 +487,7 @@ public class TestActivity1 extends BaseActivity {
             String startOrder = "FF05000e"+offsetHexLenght+fileHexLenght;
             String deviceOrder = startOrder+DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum(startOrder)+"16";
             Log.i(TAG,"余数上传deviceOrder:"+deviceOrder);
-            sendReadDeviceOrder(deviceOrder);
+            sendHexStringDeviceOrder(deviceOrder);
         }*/
 
     }
@@ -425,23 +497,23 @@ public class TestActivity1 extends BaseActivity {
         String startOrder = "FF060018";
         String deviceOrder = startOrder + DeviceOffLineFileUtil.stringToHexString(fileName) + DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum("FF 06 00 18",fileName)+"16";
         Log.i(TAG,"deviceOrder:"+deviceOrder);
-        sendReadDeviceOrder(deviceOrder);
+        sendHexStringDeviceOrder(deviceOrder);
     }
 
     public void deleteOneFile(String fileName) {
         String startOrder = "FF060018";
         String deviceOrder = startOrder + DeviceOffLineFileUtil.stringToHexString(fileName) + DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum("FF 06 00 18",fileName)+"16";
         Log.i(TAG,"删除文件deviceOrder:"+deviceOrder);
-        sendReadDeviceOrder(deviceOrder);
+        sendHexStringDeviceOrder(deviceOrder);
     }
 
     public void deleteAllFile(View view) {
         String deviceOrder  ="FF0700060C16";
-        sendReadDeviceOrder(deviceOrder);
+        sendHexStringDeviceOrder(deviceOrder);
     }
 
     public void generateFile(View view) {
-        sendReadDeviceOrder(DeviceOffLineFileUtil.generateDeviceFile);
+        sendHexStringDeviceOrder(DeviceOffLineFileUtil.generateDeviceFile);
     }
 
     public void lookupDraw(View view) {
@@ -502,13 +574,17 @@ public class TestActivity1 extends BaseActivity {
         // 32 30 31 37 30 34 31 32 31 30 32 33 30 30 2E 65 63 67
         String[] split = allHexString.split(" ");
         int fileLength = Integer.parseInt(split[4], 16);
+        Log.i(TAG,"split.length:"+split.length);
         Log.i(TAG,"fileLength:"+fileLength);
         String[] fileList = new String[fileLength];
 
         for (int i = 0; i < fileLength; i++) {
             String fileNameString ="";
             for (int j = 0; j < 18; j++) {
-                fileNameString += DeviceOffLineFileUtil.hexStringToString(split[5+i*18+j]);
+                int k = 5+i*18+j;
+                if (k<split.length){
+                    fileNameString += DeviceOffLineFileUtil.hexStringToString(split[k]);
+                }
             }
             // fileNameString:20170412102300.ecg
             Log.i(TAG,"fileNameString:"+fileNameString);
@@ -583,7 +659,7 @@ public class TestActivity1 extends BaseActivity {
             String startOrder = "FF05000e"+offsetHexLenght+fileHexLenght;
             String deviceOrder = startOrder+DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum(startOrder)+"16";
             Log.i(TAG,mUploadFileCountIndex+"分段上传deviceOrder:"+deviceOrder);
-            sendReadDeviceOrder(deviceOrder);
+            sendHexStringDeviceOrder(deviceOrder);
         }
         else {
             mAllFileCount = 0; // 需要传的次数
@@ -594,7 +670,7 @@ public class TestActivity1 extends BaseActivity {
             String startOrder = "FF05000e"+offsetHexLenght+fileHexLenght;
             String deviceOrder = startOrder+DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum(startOrder)+"16";
             Log.i(TAG,"一次上传deviceOrder:"+deviceOrder);
-            sendReadDeviceOrder(deviceOrder);
+            sendHexStringDeviceOrder(deviceOrder);
         }
     }
 
@@ -991,7 +1067,7 @@ public class TestActivity1 extends BaseActivity {
             String startOrder = "FF05000e"+offsetHexLenght+fileHexLenght;
             String deviceOrder = startOrder+DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum(startOrder)+"16";
             Log.i(TAG,mUploadFileCountIndex+"分段上传deviceOrder:"+deviceOrder);
-            sendReadDeviceOrder(deviceOrder);
+            sendHexStringDeviceOrder(deviceOrder);
         }
         else {
             if (mFileLastRemainder>0){
@@ -1000,7 +1076,7 @@ public class TestActivity1 extends BaseActivity {
                 String startOrder = "FF05000e"+offsetHexLenght+fileHexLenght;
                 String deviceOrder = startOrder+DeviceOffLineFileUtil.readDeviceSpecialFileBeforeAddSum(startOrder)+"16";
                 Log.i(TAG,"余数上传deviceOrder:"+deviceOrder);
-                sendReadDeviceOrder(deviceOrder);
+                sendHexStringDeviceOrder(deviceOrder);
                 //mFileLastRemainder = 0;
             }
             else {

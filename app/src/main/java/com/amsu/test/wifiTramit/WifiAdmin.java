@@ -429,11 +429,13 @@ public abstract class WifiAdmin {
             }
         };
         mWifiAdmin.openWifi();
-        // 连的WIFI热点是用WPA方式保护
-        /*WifiConfiguration amsu = mWifiAdmin.createWifiInfo("amsu", "20151211", WifiAdmin.TYPE_WPA);
+      /*  // 连的WIFI热点是用WPA方式保护
+        WifiConfiguration amsu = mWifiAdmin.createWifiInfo("amsu", "20151211", WifiAdmin.TYPE_WPA);
         Log.i(TAG,"amsu:"+amsu);
-        mWifiAdmin.addNetwork(amsu)*/;
+        mWifiAdmin.addNetwork(amsu);*/
        mWifiAdmin.addNetwork(mWifiAdmin.createWifiInfo(DeviceOffLineFileUtil.HOST_SPOT_SSID, DeviceOffLineFileUtil.HOST_SPOT_PASS_WORD, WifiAdmin.TYPE_WPA));
+
+
     }
 }
 

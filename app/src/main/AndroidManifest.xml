@@ -4,7 +4,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
     <!-- 读取缓存数据 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
@@ -20,9 +20,6 @@
     <!-- 访问网络权限 -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-
-
-
     <application
         android:name=".wifiTramit.MyApplication"
         android:allowBackup="true"
@@ -30,21 +27,17 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".other.MainActivity">
-
-        </activity>
-        <activity android:name=".other.QuickTransferActivity">
-
-        </activity>
-        <activity android:name=".wifiTramit.TestActivity">
+        <activity android:name=".other.MainActivity"></activity>
+        <activity android:name=".other.QuickTransferActivity"></activity>
+        <activity android:name=".wifiTramit.TestActivity1">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".wifiTramit.DrawLineTestActivity"></activity>
+        <activity android:name=".wifiTramit.DrawLineTestActivity" />
+        <activity android:name=".other.Main2Activity"></activity>
     </application>
 
 </manifest>
